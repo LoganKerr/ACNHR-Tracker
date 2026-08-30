@@ -96,6 +96,7 @@
     <div class="item" id = 'August', onclick="toggleItem('August', this)">August</div>
     <div class="item" id = 'October', onclick="toggleItem('October', this)">October</div>
     <div class="item" id = 'Noon', onclick="toggleItem('Noon', this)">12PM</div>
+    <div class="item" id = 'Midnight', onclick="toggleItem('Midnight', this)">12AM</div>
     <div class="item" id = 'River', onclick="toggleItem('River', this)">River</div>
     <div class="item" id = 'Sea', onclick="toggleItem('Sea', this)">Sea</div>
     <div class="item" id = 'on_Ground', onclick="toggleItem('on_Ground', this)">on Ground</div>
@@ -290,28 +291,32 @@ function completeCheck(checkId) {
   renderTables(); // Instantly removes checked item and cleans up empty headers
 }
 
-    function renderTables() {
+function renderTables() {
   const container = document.getElementById("tables-container");
   container.innerHTML = "";
 
   regions.forEach(region => {
+    // 1. Skip region entirely if its month OR hour is false in itemsState
+    if (!itemsState[region.month] || !itemsState[region.hour]) {
+      return;
+    }
+
     const card = document.createElement("div");
     card.className = "region-card";
 
-    // 1. Get all checks belonging to this region's month AND hour
+    // 2. Get all checks belonging to this region's month AND hour
     const regionChecks = masterChecks.filter(check => 
       check.months.includes(region.month) && check.hours.includes(region.hour)
     );
 
-    // 2. Find unique items required in this region
+    // 3. Find unique items required in this region
     const uniqueItems = [...new Set(regionChecks.flatMap(check => check.items || []))];
 
     let cardHTML = `<h2>${region.name}</h2>`;
     let visibleTablesCount = 0;
 
-    // 3. Loop through each item group
+    // 4. Loop through each item group
     uniqueItems.forEach(itemName => {
-      // Filter for checks that need this item AND pass isCheckAvailable & not completed
       const availableItemChecks = regionChecks.filter(check => {
         const requiresItem = check.items.includes(itemName);
         const isAvailable = isCheckAvailable(check.items, check.months, check.hours);
@@ -320,7 +325,6 @@ function completeCheck(checkId) {
         return requiresItem && isAvailable && !isCompleted;
       });
 
-      // ONLY build and append the table if there is at least one available check!
       if (availableItemChecks.length > 0) {
         visibleTablesCount++;
         cardHTML += `
@@ -339,16 +343,14 @@ function completeCheck(checkId) {
       }
     });
 
-    // Optional: Hide the entire region card if all item tables inside it are empty
-    if (visibleTablesCount === 0) {
-      card.classList.add("hidden");
+    // 5. Only append the region card if it has active checks
+    if (visibleTablesCount > 0) {
+      card.innerHTML = cardHTML;
+      container.appendChild(card);
     }
-
-    card.innerHTML = cardHTML;
-    container.appendChild(card);
   });
 
-  // Highlight active items in the inventory bar
+  // Re-sync active highlighting on inventory buttons
   const inventoryItems = document.querySelectorAll("#inventory .item");
   inventoryItems.forEach(el => {
     if (itemsState[el.id]) {
