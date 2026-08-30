@@ -86,13 +86,28 @@
 </head>
 <body>
 
-  <h1>Tracker</h1>
+  <h1>Animal Crossing New Horizons Randomizer Tracker</h1>
 
   <h2>Items</h2>
   <div class="inventory" id="inventory">
-    <div class="item" onclick="toggleItem('hookshot', this)">Hookshot</div>
-    <div class="item" onclick="toggleItem('hammer', this)">Hammer</div>
-    <div class="item" onclick="toggleItem('key', this)">Small Key</div>
+    <div class="item" id = 'Wetsuit', onclick="toggleItem('Wetsuit', this)">Wetsuit</div>
+    <div class="item" id = 'Fishing_Rod', onclick="toggleItem('Fishing_Rod', this)">Fishing Rod</div>
+    <div class="item" id = 'Net', onclick="toggleItem('Net', this)">Net</div>
+    <div class="item" id = 'January', onclick="toggleItem('January', this)">January</div>
+    <div class="item" id = 'April', onclick="toggleItem('April', this)">April</div>
+    <div class="item" id = 'August', onclick="toggleItem('August', this)">August</div>
+    <div class="item" id = 'October', onclick="toggleItem('October', this)">October</div>
+    <div class="item" id = 'Noon', onclick="toggleItem('Noon', this)">12PM</div>
+    <div class="item" id = 'River', onclick="toggleItem('River', this)">River</div>
+    <div class="item" id = 'Sea', onclick="toggleItem('Sea', this)">Sea</div>
+    <div class="item" id = 'on_Ground', onclick="toggleItem('on_Ground', this)">on Ground</div>
+    <div class="item" id = 'Flying', onclick="toggleItem('Flying', this)">Flying</div>
+    <div class="item" id = 'on_Flowers', onclick="toggleItem('on_Flowers', this)">on Flowers</div>
+    <div class="item" id = 'on_Trees', onclick="toggleItem('on_Trees', this)">on Trees</div>
+    <div class="item" id = 'Clifftop_River', onclick="toggleItem('Clifftop_River', this)">Clifftop River</div>
+    <div class="item" id = 'Bait', onclick="toggleItem('Bait', this)">Bait</div>
+    <div class="item" id = 'Palm_Trees', onclick="toggleItem('Palm_Trees', this)">Palm Trees</div>
+    <div class="item" id = 'Nook_Miles_Tickets', onclick="toggleItem('Nook_Miles_Tickets', this)">Nook Miles Tickets</div>
   </div>
 
   <h2>Checks</h2>
@@ -101,79 +116,169 @@
   <script>
     // 1. Data Definitions
     const itemsState = {
-      hookshot: false,
-      hammer: false,
-      key: false
+      Wetsuit: true,
+      Fishing_Rod: true,
+      Net: true,
+      January: true,
+      April: false,
+      August: false,
+      October: false,
+      Noon: true,
+      Midnight: false,
     };
+
+    const itemDisplayNames = {
+  // Tools & Equipment
+  Wetsuit: "Wetsuit",
+  Fishing_Rod: "Fishing Rod",
+  Net: "Net",
+  Bait: "Bait",
+  Nook_Miles_Tickets: "Nook Miles Tickets",
+
+  // Months
+  January: "January",
+  April: "April",
+  August: "August",
+  October: "October",
+
+  // Times
+  Noon: "12PM",
+  Midnight: "12AM",
+
+  // Locations & Environments
+  River: "River",
+  Sea: "Sea",
+  on_Ground: "On Ground",
+  Flying: "Flying",
+  on_Flowers: "On Flowers",
+  on_Trees: "On Trees",
+  Clifftop_River: "Clifftop River",
+  Palm_Trees: "Palm Trees"
+};
+
+// Robust lookup helper (falls back to replacing underscores if a key is unlisted)
+function getDisplayName(key) {
+  return itemDisplayNames[key] || key.replace(/_/g, ' ');
+}
+
+// Helper function with fallback
+function getDisplayName(key) {
+  return itemDisplayNames[key] || key.replace(/_/g, ' ');
+}
+
+    // Helper to convert names into URL/ID friendly strings
+function slugify(text) {
+  return text
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '-') // Replace spaces and special chars with hyphens
+    .replace(/(^-|-$)+/g, '');   // Trim leading/trailing hyphens
+}
 
     // Tracks overall completed check IDs
     const completedChecks = new Set();
 
-    // 8 Regions (Tables) with logic requirements
-    // Available reqs: 'none', or any key from itemsState, or array of keys (AND logic)
-    const regionsData = [
-      {
-        name: "Region 1: Starter Zone",
-        checks: [
-          { id: "c1", name: "Tree Ledge", req: "none" },
-          { id: "c2", name: "Across Chasm", req: "hookshot" },
-          { id: "c3", name: "Behind Rock", req: "hammer" }
-        ]
-      },
-      {
-        name: "Region 2: Castle Grounds",
-        checks: [
-          { id: "c4", name: "Front Gate", req: "none" },
-          { id: "c5", name: "Locked Tower", req: "key" },
-          { id: "c2", name: "Across Chasm", req: "hookshot" } // Duplicate check test
-        ]
-      },
-      {
-        name: "Region 3: Deep Woods",
-        checks: [
-          { id: "c6", name: "Hollow Tree", req: "none" },
-          { id: "c7", name: "High Canopy", req: "hookshot" }
-        ]
-      },
-      {
-        name: "Region 4: Sunken Temple",
-        checks: [
-          { id: "c8", name: "Entrance Chest", req: "key" },
-          { id: "c9", name: "Altar Room", req: ["hammer", "key"] }
-        ]
-      },
-      {
-        name: "Region 5: Mountain Pass",
-        checks: [
-          { id: "c10", name: "Boulder Gate", req: "hammer" }
-        ]
-      },
-      {
-        name: "Region 6: Volcano Interior",
-        checks: [
-          { id: "c11", name: "Magma Ledge", req: "hookshot" }
-        ]
-      },
-      {
-        name: "Region 7: Graveyard",
-        checks: [
-          { id: "c12", name: "Crypt Door", req: "key" }
-        ]
-      },
-      {
-        name: "Region 8: Final Dungeon",
-        checks: [
-          { id: "c13", name: "Boss Door", req: ["hookshot", "hammer", "key"] }
-        ]
-      }
-    ];
+const rawMasterChecks = [
+  { id: "acorn-barnacle", name: "Acorn Barnacle", items: ["Wetsuit"], months: ["January", "April", "August", "October"], hours: ["Noon", "Midnight"] },
+  { id: "firefly-squid", name: "Firefly Squid", items: ["Wetsuit"], months: ["April"], hours: ["Midnight"] },
+  { id: "flatworm", name: "Flatworm", items: ["Wetsuit"], months: ["August"], hours: ["Midnight"] },
+  { id: "horseshoe-crab", name: "Horseshoe Crab", items: ["Wetsuit"], months: ["August"], hours: ["Midnight"] },
+  { id: "moon-jellyfish", name: "Moon Jellyfish", items: ["Wetsuit"], months: ["August"], hours: ["Noon", "Midnight"] },
+  { id: "mussel", name: "Mussel", items: ["Wetsuit"], months: ["August", "October"], hours: ["Noon", "Midnight"] },
+  { id: "oyster", name: "Oyster", items: ["Wetsuit"], months: ["January", "October"], hours: ["Noon", "Midnight"] },
+  { id: "scallop", name: "Scallop", items: ["Wetsuit"], months: ["January", "April", "August", "October"], hours: ["Noon", "Midnight"] },
+  { id: "sea-anemone", name: "Sea Anemone", items: ["Wetsuit"], months: ["January", "April", "August", "October"], hours: ["Noon", "Midnight"] },
+  { id: "sea-cucumber", name: "Sea Cucumber", items: ["Wetsuit"], months: ["January", "April"], hours: ["Noon", "Midnight"] },
+  { id: "sea-grapes", name: "Sea Grapes", items: ["Wetsuit"], months: ["August"], hours: ["Noon", "Midnight"] },
+  { id: "sea-slug", name: "Sea Slug", items: ["Wetsuit"], months: ["January", "April", "August", "October"], hours: ["Noon", "Midnight"] },
+  { id: "sea-star", name: "Sea Star", items: ["Wetsuit"], months: ["January", "April", "August", "October"], hours: ["Noon", "Midnight"] },
+  { id: "sea-urchin", name: "Sea Urchin", items: ["Wetsuit"], months: ["August"], hours: ["Noon", "Midnight"] },
+  { id: "seaweed", name: "Seaweed", items: ["Wetsuit"], months: ["January", "April", "October"], hours: ["Noon", "Midnight"] },
+  { id: "spotted-garden-eel", name: "Spotted Garden Eel", items: ["Wetsuit"], months: ["August", "October"], hours: ["Noon"] },
+  { id: "sweet-shrimp", name: "Sweet Shrimp", items: ["Wetsuit"], months: ["January", "October"], hours: ["Midnight"] },
+  { id: "turban-shell", name: "Turban Shell", items: ["Wetsuit"], months: ["April", "October"], hours: ["Noon", "Midnight"] },
+  { id: "whelk", name: "Whelk", items: ["Wetsuit"], months: ["January", "April", "August", "October"], hours: ["Noon", "Midnight"] },
+  { id: "common-bluebottle", name: "Common Bluebottle", items: ["Net", "Flying"], months: ["April", "August", "October"], hours: ["Noon"] },
+  { id: "common-butterfly", name: "Common Butterfly", items: ["Net", "Flying"], months: ["January", "April", "August", "October"], hours: ["Noon"] },
+  { id: "damselfly", name: "Damselfly", items: ["Net", "Flying"], months: ["January"], hours: ["Noon", "Midnight"] },
+  { id: "darner-dragonfly", name: "Darner Dragonfly", items: ["Net", "Flying"], months: ["April", "August", "October"], hours: ["Noon"] },
+  { id: "honeybee", name: "Honeybee", items: ["Net", "Flying"], months: ["April"], hours: ["Noon"] },
+  { id: "monarch-butterfly", name: "Monarch Butterfly", items: ["Net", "Flying"], months: ["October"], hours: ["Noon"] },
+  { id: "mosquito", name: "Mosquito", items: ["Net", "Flying"], months: ["August"], hours: ["Midnight"] },
+  { id: "moth", name: "Moth", items: ["Net", "Flying"], months: ["January", "April", "August", "October"], hours: ["Midnight"] },
+  { id: "paper-kite-butterfly", name: "Paper Kite Butterfly", items: ["Net", "Flying"], months: ["January", "April", "August", "October"], hours: ["Noon"] },
+  { id: "red-dragonfly", name: "Red Dragonfly", items: ["Net", "Flying"], months: ["October"], hours: ["Noon"] },
+  { id: "tiger-butterfly", name: "Tiger Butterfly", items: ["Net", "Flying"], months: ["April", "August"], hours: ["Noon"] },
+  { id: "yellow-butterfly", name: "Yellow Butterfly", items: ["Net", "Flying"], months: ["April", "October"], hours: ["Noon"] },
+  { id: "ladybug", name: "Ladybug", items: ["Net", "on_Flowers"], months: ["April", "October"], hours: ["Noon"] },
+  { id: "man-faced-stink-bug", name: "Man-Faced Stink Bug", items: ["Net", "on_Flowers"], months: ["April", "August", "October"], hours: ["Midnight"] },
+  { id: "mantis", name: "Mantis", items: ["Net", "on_Flowers"], months: ["April", "August", "October"], hours: ["Noon"] },
+  { id: "stinkbug", name: "Stinkbug", items: ["Net", "on_Flowers"], months: ["April", "August", "October"], hours: ["Noon", "Midnight"] },
+  { id: "bell-cricket", name: "Bell Cricket", items: ["Net", "on_Ground"], months: ["October"], hours: ["Midnight"] },
+  { id: "cricket", name: "Cricket", items: ["Net", "on_Ground"], months: ["October"], hours: ["Midnight"] },
+  { id: "earth-boring-dung-beetle", name: "Earth-Boring Dung Beetle", items: ["Net", "on_Ground"], months: ["August"], hours: ["Noon", "Midnight"] },
+  { id: "grasshopper", name: "Grasshopper", items: ["Net", "on_Ground"], months: ["August"], hours: ["Noon"] },
+  { id: "hermit-crab", name: "Hermit Crab", items: ["Net", "on_Ground"], months: ["January", "April", "August", "October"], hours: ["Midnight"] },
+  { id: "long-locust", name: "Long Locust", items: ["Net", "on_Ground"], months: ["April", "August", "October"], hours: ["Noon"] },
+  { id: "rice-grasshopper", name: "Rice Grasshopper", items: ["Net", "on_Ground"], months: ["August", "October"], hours: ["Noon"] },
+  { id: "wharf-roach", name: "Wharf Roach", items: ["Net", "on_Ground"], months: ["January", "April", "August", "October"], hours: ["Noon", "Midnight"] },
+  { id: "brown-cicada", name: "Brown Cicada", items: ["Net", "on_Trees"], months: ["August"], hours: ["Noon"] },
+  { id: "drone-beetle", name: "Drone Beetle", items: ["Net", "on_Trees"], months: ["August"], hours: ["Noon", "Midnight"] },
+  { id: "giant-cicada", name: "Giant Cicada", items: ["Net", "on_Trees"], months: ["August"], hours: ["Noon"] },
+  { id: "horned-dynastid", name: "Horned Dynastid", items: ["Net", "on_Trees"], months: ["August"], hours: ["Midnight"] },
+  { id: "miyama-stag", name: "Miyama Stag", items: ["Net", "on_Trees"], months: ["August"], hours: ["Noon", "Midnight"] },
+  { id: "robust-cicada", name: "Robust Cicada", items: ["Net", "on_Trees"], months: ["August"], hours: ["Noon"] },
+  { id: "saw-stag", name: "Saw Stag", items: ["Net", "on_Trees"], months: ["August"], hours: ["Noon", "Midnight"] },
+  { id: "walker-cicada", name: "Walker Cicada", items: ["Net", "on_Trees"], months: ["August"], hours: ["Noon"] },
+  { id: "bitterling", name: "Bitterling", items: ["Fishing_Rod", "River"], months: ["January"], hours: ["Noon", "Midnight"] },
+  { id: "black-bass", name: "Black Bass", items: ["Fishing_Rod", "River"], months: ["January", "April", "August", "October"], hours: ["Noon", "Midnight"] },
+  { id: "bluegill", name: "Bluegill", items: ["Fishing_Rod", "River"], months: ["January", "April", "August", "October"], hours: ["Noon"] },
+  { id: "crucian-carp", name: "Crucian Carp", items: ["Fishing_Rod", "River"], months: ["January", "April", "August", "October"], hours: ["Noon", "Midnight"] },
+  { id: "dace", name: "Dace", items: ["Fishing_Rod", "River"], months: ["January", "April", "August", "October"], hours: ["Midnight"] },
+  { id: "loach", name: "Loach", items: ["Fishing_Rod", "River"], months: ["April"], hours: ["Noon", "Midnight"] },
+  { id: "pale-chub", name: "Pale Chub", items: ["Fishing_Rod", "River"], months: ["January", "April", "August", "October"], hours: ["Noon"] },
+  { id: "pond-smelt", name: "Pond Smelt", items: ["Fishing_Rod", "River"], months: ["January"], hours: ["Noon", "Midnight"] },
+  { id: "sweetfish", name: "Sweetfish", items: ["Fishing_Rod", "River"], months: ["August"], hours: ["Noon", "Midnight"] },
+  { id: "tilapia", name: "Tilapia", items: ["Fishing_Rod", "River"], months: ["August", "October"], hours: ["Noon", "Midnight"] },
+  { id: "yellow-perch", name: "Yellow Perch", items: ["Fishing_Rod", "River"], months: ["January", "October"], hours: ["Noon", "Midnight"] },
+  { id: "blowfish", name: "Blowfish", items: ["Fishing_Rod", "Sea"], months: ["January"], hours: ["Midnight"] },
+  { id: "clown-fish", name: "Clown Fish", items: ["Fishing_Rod", "Sea"], months: ["April", "August"], hours: ["Noon", "Midnight"] },
+  { id: "dab", name: "Dab", items: ["Fishing_Rod", "Sea"], months: ["January", "April", "October"], hours: ["Noon", "Midnight"] },
+  { id: "football-fish", name: "Football Fish", items: ["Fishing_Rod", "Sea"], months: ["January"], hours: ["Midnight"] },
+  { id: "horse-mackerel", name: "Horse Mackerel", items: ["Fishing_Rod", "Sea"], months: ["January", "April", "August", "October"], hours: ["Noon", "Midnight"] },
+  { id: "olive-flounder", name: "Olive Flounder", items: ["Fishing_Rod", "Sea"], months: ["January", "April", "August", "October"], hours: ["Noon", "Midnight"] },
+  { id: "puffer-fish", name: "Puffer Fish", items: ["Fishing_Rod", "Sea"], months: ["August"], hours: ["Noon", "Midnight"] },
+  { id: "red-snapper", name: "Red Snapper", items: ["Fishing_Rod", "Sea"], months: ["January", "April", "August", "October"], hours: ["Noon", "Midnight"] },
+  { id: "sea-bass", name: "Sea Bass", items: ["Fishing_Rod", "Sea"], months: ["January", "April", "August", "October"], hours: ["Noon", "Midnight"] },
+  { id: "sea-butterfly", name: "Sea Butterfly", items: ["Fishing_Rod", "Sea"], months: ["January"], hours: ["Noon", "Midnight"] },
+  { id: "sea-horse", name: "Sea Horse", items: ["Fishing_Rod", "Sea"], months: ["April", "August", "October"], hours: ["Noon", "Midnight"] },
+  { id: "squid", name: "Squid", items: ["Fishing_Rod", "Sea"], months: ["January", "April"], hours: ["Noon", "Midnight"] },
+  { id: "zebra-turkeyfish", name: "Zebra Turkeyfish", items: ["Fishing_Rod", "Sea"], months: ["April", "August", "October"], hours: ["Noon", "Midnight"] }
+];
+
+// 2. Automatically assign unique slug IDs
+const masterChecks = rawMasterChecks.map(check => ({
+  ...check,
+  id: slugify(check.name) // Results in "acorn-barnacle", "scallop", "sea-anemone"
+}));
+
+// Definition for the 8 region tables
+const regions = [
+  { name: "January - 12PM", month: "January", hour: "Noon" },
+  { name: "January - 12AM", month: "January", hour: "Midnight" },
+  { name: "April - 12PM",   month: "April",   hour: "Noon" },
+  { name: "April - 12AM",   month: "April",   hour: "Midnight" },
+  { name: "August - 12PM",  month: "August",  hour: "Noon" },
+  { name: "August - 12AM",  month: "August",  hour: "Midnight" },
+  { name: "October - 12PM", month: "October", hour: "Noon" },
+  { name: "October - 12AM", month: "October", hour: "Midnight" }
+];
 
     // 2. Logic Checker
-    function isCheckAvailable(req) {
-      if (req === "none") return true;
-      if (typeof req === "string") return itemsState[req];
-      if (Array.isArray(req)) return req.every(item => itemsState[item]);
-      return false;
+    function isCheckAvailable(items, months, hours) {
+      console.log(itemsState)
+      return Array.isArray(items) && items.every(item => itemsState[item]) &&
+         Array.isArray(months) && months.some(month => itemsState[month]) &&
+         Array.isArray(hours) && hours.some(hour => itemsState[hour]);
     }
 
     // 3. Item Toggle Action
@@ -189,48 +294,74 @@
       updateVisibility();
     }
 
-    // 5. Build Initial Tables
     function renderTables() {
-      const container = document.getElementById("tables-container");
-      container.innerHTML = "";
+  const container = document.getElementById("tables-container");
+  container.innerHTML = "";
 
-      regionsData.forEach(region => {
-        const card = document.createElement("div");
-        card.className = "region-card";
+  regions.forEach(region => {
+    const card = document.createElement("div");
+    card.className = "region-card";
 
-        let tableHTML = `<h3>${region.name}</h3><table><thead><tr><th>Location</th></tr></thead><tbody>`;
+    // 1. Get all checks for this region
+    const regionChecks = masterChecks.filter(check => 
+      check.months.includes(region.month) && check.hours.includes(region.hour)
+    );
+
+    // 2. Find all unique items required by checks in this region
+    const uniqueItems = [...new Set(regionChecks.flatMap(check => check.items || []))];
+
+    let cardHTML = `<h2>${region.name}</h2>`;
+
+    // 3. Loop through each item to generate its own table
+    uniqueItems.forEach(itemName => {
+      // Filter checks that require this specific item
+      const itemChecks = regionChecks.filter(check => check.items.includes(itemName));
+
+      if (itemChecks.length > 0) {
+        cardHTML += `
+          <h3>${getDisplayName(itemName)}</h3>
+          <table>
+            <tbody>`;
         
-        region.checks.forEach(check => {
-          tableHTML += `
+        itemChecks.forEach(check => {
+          cardHTML += `
             <tr class="check-row" data-id="${check.id}" onclick="completeCheck('${check.id}')">
               <td>${check.name}</td>
             </tr>`;
         });
 
-        tableHTML += `</tbody></table>`;
-        card.innerHTML = tableHTML;
-        container.appendChild(card);
-      });
-    }
+        cardHTML += `</tbody></table><br>`;
+      }
+    });
 
-    // 6. Refresh Dynamic Visibility
+    card.innerHTML = cardHTML;
+    container.appendChild(card);
+  });
+
+  // Highlight initial active inventory items in UI
+  const inventory = Array.from(document.getElementById("inventory").children);
+  inventory.forEach(item => {
+    if (itemsState[item.id]) {
+      item.classList.add("active");
+    }
+  });
+}
+
     function updateVisibility() {
-      regionsData.forEach(region => {
-        region.checks.forEach(check => {
-          const rows = document.querySelectorAll(`tr[data-id="${check.id}"]`);
-          const available = isCheckAvailable(check.req);
-          const completed = completedChecks.has(check.id);
+  masterChecks.forEach(check => {
+    const rows = document.querySelectorAll(`tr[data-id="${check.id}"]`);
+    const available = isCheckAvailable(check.items, check.months, check.hours);
+    const completed = completedChecks.has(check.id);
 
-          rows.forEach(row => {
-            if (!completed && available) {
-              row.classList.remove("hidden");
-            } else {
-              row.classList.add("hidden");
-            }
-          });
-        });
-      });
-    }
+    rows.forEach(row => {
+      if (!completed && available) {
+        row.classList.remove("hidden");
+      } else {
+        row.classList.add("hidden");
+      }
+    });
+  });
+}
 
     // Initialize
     renderTables();
