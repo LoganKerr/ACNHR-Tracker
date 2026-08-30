@@ -1,0 +1,240 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Randomizer Tracker</title>
+  <style>
+    :root {
+      --bg: #121212;
+      --card-bg: #1e1e1e;
+      --text: #e0e0e0;
+      --accent: #4da6ff;
+      --border: #333;
+    }
+
+    body {
+      font-family: system-ui, -apple-system, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      margin: 20px;
+    }
+
+    h2 { margin-top: 0; }
+
+    /* Inventory Section */
+    .inventory {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 25px;
+      flex-wrap: wrap;
+    }
+
+    .item {
+      padding: 10px 16px;
+      background: var(--card-bg);
+      border: 2px solid var(--border);
+      border-radius: 8px;
+      cursor: pointer;
+      user-select: none;
+      transition: border-color 0.2s, background-color 0.2s;
+    }
+
+    .item.active {
+      border-color: var(--accent);
+      background: #1a2a3a;
+      font-weight: bold;
+    }
+
+    /* 8-Table Grid Layout */
+    .tables-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 20px;
+    }
+
+    .region-card {
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 15px;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+
+    th, td {
+      text-align: left;
+      padding: 8px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    tr.check-row {
+      cursor: pointer;
+    }
+
+    tr.check-row:hover {
+      background: #2a2a2a;
+    }
+
+    .hidden {
+      display: none !important;
+    }
+  </style>
+</head>
+<body>
+
+  <h1>Tracker</h1>
+
+  <h2>Items</h2>
+  <div class="inventory" id="inventory">
+    <div class="item" onclick="toggleItem('hookshot', this)">Hookshot</div>
+    <div class="item" onclick="toggleItem('hammer', this)">Hammer</div>
+    <div class="item" onclick="toggleItem('key', this)">Small Key</div>
+  </div>
+
+  <h2>Checks</h2>
+  <div class="tables-grid" id="tables-container"></div>
+
+  <script>
+    // 1. Data Definitions
+    const itemsState = {
+      hookshot: false,
+      hammer: false,
+      key: false
+    };
+
+    // Tracks overall completed check IDs
+    const completedChecks = new Set();
+
+    // 8 Regions (Tables) with logic requirements
+    // Available reqs: 'none', or any key from itemsState, or array of keys (AND logic)
+    const regionsData = [
+      {
+        name: "Region 1: Starter Zone",
+        checks: [
+          { id: "c1", name: "Tree Ledge", req: "none" },
+          { id: "c2", name: "Across Chasm", req: "hookshot" },
+          { id: "c3", name: "Behind Rock", req: "hammer" }
+        ]
+      },
+      {
+        name: "Region 2: Castle Grounds",
+        checks: [
+          { id: "c4", name: "Front Gate", req: "none" },
+          { id: "c5", name: "Locked Tower", req: "key" },
+          { id: "c2", name: "Across Chasm", req: "hookshot" } // Duplicate check test
+        ]
+      },
+      {
+        name: "Region 3: Deep Woods",
+        checks: [
+          { id: "c6", name: "Hollow Tree", req: "none" },
+          { id: "c7", name: "High Canopy", req: "hookshot" }
+        ]
+      },
+      {
+        name: "Region 4: Sunken Temple",
+        checks: [
+          { id: "c8", name: "Entrance Chest", req: "key" },
+          { id: "c9", name: "Altar Room", req: ["hammer", "key"] }
+        ]
+      },
+      {
+        name: "Region 5: Mountain Pass",
+        checks: [
+          { id: "c10", name: "Boulder Gate", req: "hammer" }
+        ]
+      },
+      {
+        name: "Region 6: Volcano Interior",
+        checks: [
+          { id: "c11", name: "Magma Ledge", req: "hookshot" }
+        ]
+      },
+      {
+        name: "Region 7: Graveyard",
+        checks: [
+          { id: "c12", name: "Crypt Door", req: "key" }
+        ]
+      },
+      {
+        name: "Region 8: Final Dungeon",
+        checks: [
+          { id: "c13", name: "Boss Door", req: ["hookshot", "hammer", "key"] }
+        ]
+      }
+    ];
+
+    // 2. Logic Checker
+    function isCheckAvailable(req) {
+      if (req === "none") return true;
+      if (typeof req === "string") return itemsState[req];
+      if (Array.isArray(req)) return req.every(item => itemsState[item]);
+      return false;
+    }
+
+    // 3. Item Toggle Action
+    function toggleItem(itemKey, el) {
+      itemsState[itemKey] = !itemsState[itemKey];
+      el.classList.toggle("active");
+      updateVisibility();
+    }
+
+    // 4. Complete Check Action (Removes globally)
+    function completeCheck(checkId) {
+      completedChecks.add(checkId);
+      updateVisibility();
+    }
+
+    // 5. Build Initial Tables
+    function renderTables() {
+      const container = document.getElementById("tables-container");
+      container.innerHTML = "";
+
+      regionsData.forEach(region => {
+        const card = document.createElement("div");
+        card.className = "region-card";
+
+        let tableHTML = `<h3>${region.name}</h3><table><thead><tr><th>Location</th></tr></thead><tbody>`;
+        
+        region.checks.forEach(check => {
+          tableHTML += `
+            <tr class="check-row" data-id="${check.id}" onclick="completeCheck('${check.id}')">
+              <td>${check.name}</td>
+            </tr>`;
+        });
+
+        tableHTML += `</tbody></table>`;
+        card.innerHTML = tableHTML;
+        container.appendChild(card);
+      });
+    }
+
+    // 6. Refresh Dynamic Visibility
+    function updateVisibility() {
+      regionsData.forEach(region => {
+        region.checks.forEach(check => {
+          const rows = document.querySelectorAll(`tr[data-id="${check.id}"]`);
+          const available = isCheckAvailable(check.req);
+          const completed = completedChecks.has(check.id);
+
+          rows.forEach(row => {
+            if (!completed && available) {
+              row.classList.remove("hidden");
+            } else {
+              row.classList.add("hidden");
+            }
+          });
+        });
+      });
+    }
+
+    // Initialize
+    renderTables();
+    updateVisibility();
+  </script>
+</body>
+</html>
