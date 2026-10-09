@@ -11,6 +11,9 @@
       --text: #e0e0e0;
       --accent: #4da6ff;
       --border: #333;
+      --success: #28a745;
+      --danger: #dc3545;
+      --gold: #ffd700;
     }
 
     body {
@@ -21,6 +24,107 @@
     }
 
     h2 { margin-top: 0; }
+
+    /* Connection Panel */
+    .connection-panel {
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 15px;
+      margin-bottom: 20px;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 15px;
+      align-items: center;
+    }
+
+    .form-group {
+      display: flex;
+      flex-direction: column;
+      gap: 5px;
+    }
+
+    input[type="text"] {
+      background: #2a2a2a;
+      color: #fff;
+      border: 1px solid var(--border);
+      padding: 8px;
+      border-radius: 4px;
+      font-size: 14px;
+    }
+
+    button.btn {
+      padding: 9px 16px;
+      border-radius: 6px;
+      border: none;
+      font-weight: bold;
+      cursor: pointer;
+      color: #fff;
+      transition: opacity 0.2s;
+    }
+
+    .btn-connect { background: var(--accent); }
+    .btn-disconnect { background: var(--danger); }
+    .btn:hover { opacity: 0.85; }
+
+    #status-badge {
+      padding: 6px 12px;
+      border-radius: 20px;
+      font-size: 12px;
+      font-weight: bold;
+      text-transform: uppercase;
+      background: #444;
+      color: #ccc;
+    }
+
+    #status-badge.connected { background: var(--success); color: #fff; }
+    #status-badge.disconnected { background: #555; color: #aaa; }
+    #status-badge.connecting { background: #b8860b; color: #fff; }
+
+    /* GO MODE Badge */
+    #go-mode-badge {
+      padding: 6px 14px;
+      border-radius: 20px;
+      font-size: 13px;
+      font-weight: 900;
+      text-transform: uppercase;
+      background: var(--gold);
+      color: #000;
+      box-shadow: 0 0 12px rgba(255, 215, 0, 0.8);
+      display: none;
+      animation: pulse 1.5s infinite alternate;
+    }
+
+    @keyframes pulse {
+      from { transform: scale(1); box-shadow: 0 0 8px rgba(255, 215, 0, 0.6); }
+      to { transform: scale(1.08); box-shadow: 0 0 18px rgba(255, 215, 0, 1); }
+    }
+
+    /* VICTORY BANNER */
+    #victory-banner {
+      display: none;
+      width: 100%;
+      background: linear-gradient(135deg, #1b5e20, #2e7d32, #ffd700);
+      background-size: 200% 200%;
+      animation: gradientShift 3s ease infinite;
+      color: #ffffff;
+      text-shadow: 0 2px 4px rgba(0,0,0,0.8);
+      text-align: center;
+      padding: 16px;
+      border-radius: 8px;
+      font-size: 22px;
+      font-weight: 900;
+      letter-spacing: 1px;
+      box-shadow: 0 0 20px rgba(46, 125, 50, 0.8);
+      margin-bottom: 20px;
+      border: 2px solid var(--gold);
+    }
+
+    @keyframes gradientShift {
+      0% { background-position: 0% 50%; }
+      50% { background-position: 100% 50%; }
+      100% { background-position: 0% 50%; }
+    }
 
     /* Inventory Section */
     .inventory {
@@ -35,18 +139,20 @@
       background: var(--card-bg);
       border: 2px solid var(--border);
       border-radius: 8px;
-      cursor: pointer;
+      cursor: default;
       user-select: none;
-      transition: border-color 0.2s, background-color 0.2s;
+      transition: border-color 0.2s, background-color 0.2s, opacity 0.2s;
+      opacity: 0.5;
     }
 
     .item.active {
       border-color: var(--accent);
       background: #1a2a3a;
       font-weight: bold;
+      opacity: 1;
     }
 
-    /* 8-Table Grid Layout */
+    /* Grid Layout */
     .tables-grid {
       display: grid;
       grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
@@ -58,6 +164,19 @@
       border: 1px solid var(--border);
       border-radius: 8px;
       padding: 15px;
+    }
+
+    .region-card.go-mode-card {
+      border: 2px solid var(--gold);
+      background: #2a2500;
+      grid-column: 1 / -1;
+    }
+
+    .region-card.victory-card {
+      border: 2px solid var(--success);
+      background: #0a290a;
+      grid-column: 1 / -1;
+      text-align: center;
     }
 
     table {
@@ -87,299 +206,613 @@
 <body>
 
   <h1>Animal Crossing New Horizons Randomizer Tracker</h1>
+  
+  <!-- Victory Banner -->
+  <div id="victory-banner">
+    🎉 CONGRATULATIONS! YOU HAVE FINISHED YOUR RANDOMIZER! 🎉
+  </div>
+
+  <!-- Connection Panel -->
+  <div class="connection-panel">
+    <div class="form-group">
+      <label for="port">Port:</label>
+      <input type="text" id="port" value="" placeholder="e.g. 38281" style="min-width: 150px;">
+    </div>
+    <div class="form-group">
+      <label for="slot-name">Slot Name:</label>
+      <input type="text" id="slot-name" value="">
+    </div>
+    <div class="form-group" style="margin-top: auto;">
+      <button class="btn btn-connect" onclick="connectAP()">Connect</button>
+    </div>
+    <div class="form-group" style="margin-top: auto;">
+      <button class="btn btn-disconnect" onclick="disconnectAP()">Disconnect</button>
+    </div>
+    <div class="form-group" style="margin-top: auto; margin-left: auto; display: flex; gap: 10px; align-items: center;">
+      <span id="go-mode-badge">🔥 GO MODE 🔥</span>
+      <span id="status-badge" class="disconnected">Disconnected</span>
+    </div>
+  </div>
 
   <h2>Items</h2>
   <div class="inventory" id="inventory">
-    <div class="item" id = 'Wetsuit', onclick="toggleItem('Wetsuit', this)">Wetsuit</div>
-    <div class="item" id = 'January', onclick="toggleItem('January', this)">January</div>
-    <div class="item" id = 'April', onclick="toggleItem('April', this)">April</div>
-    <div class="item" id = 'August', onclick="toggleItem('August', this)">August</div>
-    <div class="item" id = 'October', onclick="toggleItem('October', this)">October</div>
-    <div class="item" id = 'Noon', onclick="toggleItem('Noon', this)">12PM</div>
-    <div class="item" id = 'Midnight', onclick="toggleItem('Midnight', this)">12AM</div>
-    <div class="item" id = 'River', onclick="toggleItem('River', this)">River</div>
-    <div class="item" id = 'Sea', onclick="toggleItem('Sea', this)">Sea</div>
-    <div class="item" id = 'on_Ground', onclick="toggleItem('on_Ground', this)">on Ground</div>
-    <div class="item" id = 'Flying', onclick="toggleItem('Flying', this)">Flying</div>
-    <div class="item" id = 'on_Flowers', onclick="toggleItem('on_Flowers', this)">on Flowers</div>
-    <div class="item" id = 'on_Trees', onclick="toggleItem('on_Trees', this)">on Trees</div>
-    <div class="item" id = 'Clifftop_River', onclick="toggleItem('Clifftop_River', this)">Clifftop River</div>
-    <div class="item" id = 'Bait', onclick="toggleItem('Bait', this)">Bait</div>
-    <div class="item" id = 'Palm_Trees', onclick="toggleItem('Palm_Trees', this)">Palm Trees</div>
-    <div class="item" id = 'Nook_Miles_Tickets', onclick="toggleItem('Nook_Miles_Tickets', this)">Nook Miles Tickets</div>
+    <div class="item" id="Wetsuit">Wetsuit</div>
+    <div class="item" id="Fishing_Rod">Fishing Rod</div>
+    <div class="item" id="Net">Net</div>
+    <div class="item" id="January">January</div>
+    <div class="item" id="April">April</div>
+    <div class="item" id="August">August</div>
+    <div class="item" id="October">October</div>
+    <div class="item" id="12PM">12PM</div>
+    <div class="item" id="12AM">12AM</div>
+    <div class="item" id="River">River</div>
+    <div class="item" id="Clifftop_River">River Clifftop</div>
+    <div class="item" id="Sea">Sea</div>
+    <div class="item" id="on_Ground">on Ground</div>
+    <div class="item" id="Flying">Flying</div>
+    <div class="item" id="on_Flowers">on Flowers</div>
+    <div class="item" id="on_Trees">on Trees</div>
+    <div class="item" id="on_Palm_Trees">on Palm Trees</div>
+    <div class="item" id="Bait">Bait</div>
+    <div class="item" id="Nook_Miles_Tickets">Nook Miles Tickets</div>
   </div>
 
   <h2>Checks</h2>
   <div class="tables-grid" id="tables-container"></div>
 
   <script>
-    // 1. Data Definitions
+    let ws = null;
+    let isFinished = false;
+
+    // Dynamic ID Lookups
+    let apItemIdToNameMap = {};
+    let locationNameToApIdMap = {};
+    let apIdToLocationNameMap = {};
+
+    function cleanKey(str) {
+      return (str || "").toLowerCase().replace(/[^a-z0-9]/g, '');
+    }
+
+    // Default item states tracked from AP server
     const itemsState = {
-      Wetsuit: true,
-      Fishing_Rod: true,
-      Net: true,
-      January: true,
+      Wetsuit: false,
+      Fishing_Rod: false,
+      Net: false,
+      Bait: false,
+      Nook_Miles_Tickets: false,
+      January: false,
       April: false,
       August: false,
       October: false,
-      Noon: true,
-      Midnight: false,
+      "12PM": false,
+      "12AM": false,
+      River_A: false,
+      River_B: false,
+      Sea: false,
+      on_Ground: false,
+      Flying: false,
+      on_Flowers: false,
+      on_Trees: false,
+      on_Palm_Trees: false
     };
 
     const itemDisplayNames = {
-  // Tools & Equipment
-  Wetsuit: "Wetsuit",
-  Fishing_Rod: "Fishing Rod",
-  Net: "Net",
-  Bait: "Bait",
-  Nook_Miles_Tickets: "Nook Miles Tickets",
+      Wetsuit: "Wetsuit",
+      Fishing_Rod: "Fishing Rod",
+      Net: "Net",
+      Bait: "Bait",
+      Nook_Miles_Tickets: "Nook Miles Tickets",
+      January: "January",
+      April: "April",
+      August: "August",
+      October: "October",
+      "12PM": "12PM",
+      "12AM": "12AM",
+      River: "River",
+      Clifftop_River: "River Clifftop",
+      Sea: "Sea",
+      on_Ground: "On Ground",
+      Flying: "Flying",
+      on_Flowers: "On Flowers",
+      on_Trees: "On Trees",
+      on_Palm_Trees: "On Palm Trees"
+    };
 
-  // Months
-  January: "January",
-  April: "April",
-  August: "August",
-  October: "October",
+    function getDisplayName(key) {
+      return itemDisplayNames[key] || key.replace(/_/g, ' ');
+    }
 
-  // Times
-  Noon: "12PM",
-  Midnight: "12AM",
+    function slugify(text) {
+      return text
+        .toLowerCase()
+        .replace(/[^a-z0-9]+/g, '-')
+        .replace(/(^-|-$)+/g, '');
+    }
 
-  // Locations & Environments
-  River: "River",
-  Sea: "Sea",
-  on_Ground: "On Ground",
-  Flying: "Flying",
-  on_Flowers: "On Flowers",
-  on_Trees: "On Trees",
-  Clifftop_River: "Clifftop River",
-  Palm_Trees: "Palm Trees"
-};
-
-// Robust lookup helper (falls back to replacing underscores if a key is unlisted)
-function getDisplayName(key) {
-  return itemDisplayNames[key] || key.replace(/_/g, ' ');
-}
-
-// Helper function with fallback
-function getDisplayName(key) {
-  return itemDisplayNames[key] || key.replace(/_/g, ' ');
-}
-
-    // Helper to convert names into URL/ID friendly strings
-function slugify(text) {
-  return text
-    .toLowerCase()
-    .replace(/[^a-z0-9]+/g, '-') // Replace spaces and special chars with hyphens
-    .replace(/(^-|-$)+/g, '');   // Trim leading/trailing hyphens
-}
-
-    // Tracks overall completed check IDs
     const completedChecks = new Set();
 
-const rawMasterChecks = [
-  { id: "acorn-barnacle", name: "Acorn Barnacle", items: ["Wetsuit"], months: ["January", "April", "August", "October"], hours: ["Noon", "Midnight"] },
-  { id: "firefly-squid", name: "Firefly Squid", items: ["Wetsuit"], months: ["April"], hours: ["Midnight"] },
-  { id: "flatworm", name: "Flatworm", items: ["Wetsuit"], months: ["August"], hours: ["Midnight"] },
-  { id: "horseshoe-crab", name: "Horseshoe Crab", items: ["Wetsuit"], months: ["August"], hours: ["Midnight"] },
-  { id: "moon-jellyfish", name: "Moon Jellyfish", items: ["Wetsuit"], months: ["August"], hours: ["Noon", "Midnight"] },
-  { id: "mussel", name: "Mussel", items: ["Wetsuit"], months: ["August", "October"], hours: ["Noon", "Midnight"] },
-  { id: "oyster", name: "Oyster", items: ["Wetsuit"], months: ["January", "October"], hours: ["Noon", "Midnight"] },
-  { id: "scallop", name: "Scallop", items: ["Wetsuit"], months: ["January", "April", "August", "October"], hours: ["Noon", "Midnight"] },
-  { id: "sea-anemone", name: "Sea Anemone", items: ["Wetsuit"], months: ["January", "April", "August", "October"], hours: ["Noon", "Midnight"] },
-  { id: "sea-cucumber", name: "Sea Cucumber", items: ["Wetsuit"], months: ["January", "April"], hours: ["Noon", "Midnight"] },
-  { id: "sea-grapes", name: "Sea Grapes", items: ["Wetsuit"], months: ["August"], hours: ["Noon", "Midnight"] },
-  { id: "sea-slug", name: "Sea Slug", items: ["Wetsuit"], months: ["January", "April", "August", "October"], hours: ["Noon", "Midnight"] },
-  { id: "sea-star", name: "Sea Star", items: ["Wetsuit"], months: ["January", "April", "August", "October"], hours: ["Noon", "Midnight"] },
-  { id: "sea-urchin", name: "Sea Urchin", items: ["Wetsuit"], months: ["August"], hours: ["Noon", "Midnight"] },
-  { id: "seaweed", name: "Seaweed", items: ["Wetsuit"], months: ["January", "April", "October"], hours: ["Noon", "Midnight"] },
-  { id: "spotted-garden-eel", name: "Spotted Garden Eel", items: ["Wetsuit"], months: ["August", "October"], hours: ["Noon"] },
-  { id: "sweet-shrimp", name: "Sweet Shrimp", items: ["Wetsuit"], months: ["January", "October"], hours: ["Midnight"] },
-  { id: "turban-shell", name: "Turban Shell", items: ["Wetsuit"], months: ["April", "October"], hours: ["Noon", "Midnight"] },
-  { id: "whelk", name: "Whelk", items: ["Wetsuit"], months: ["January", "April", "August", "October"], hours: ["Noon", "Midnight"] },
-  { id: "common-bluebottle", name: "Common Bluebottle", items: ["Flying"], months: ["April", "August", "October"], hours: ["Noon"] },
-  { id: "common-butterfly", name: "Common Butterfly", items: ["Flying"], months: ["January", "April", "August", "October"], hours: ["Noon"] },
-  { id: "damselfly", name: "Damselfly", items: ["Flying"], months: ["January"], hours: ["Noon", "Midnight"] },
-  { id: "darner-dragonfly", name: "Darner Dragonfly", items: ["Flying"], months: ["April", "August", "October"], hours: ["Noon"] },
-  { id: "honeybee", name: "Honeybee", items: ["Flying"], months: ["April"], hours: ["Noon"] },
-  { id: "monarch-butterfly", name: "Monarch Butterfly", items: ["Flying"], months: ["October"], hours: ["Noon"] },
-  { id: "mosquito", name: "Mosquito", items: ["Flying"], months: ["August"], hours: ["Midnight"] },
-  { id: "moth", name: "Moth", items: ["Flying"], months: ["January", "April", "August", "October"], hours: ["Midnight"] },
-  { id: "paper-kite-butterfly", name: "Paper Kite Butterfly", items: ["Flying"], months: ["January", "April", "August", "October"], hours: ["Noon"] },
-  { id: "red-dragonfly", name: "Red Dragonfly", items: ["Flying"], months: ["October"], hours: ["Noon"] },
-  { id: "tiger-butterfly", name: "Tiger Butterfly", items: ["Flying"], months: ["April", "August"], hours: ["Noon"] },
-  { id: "yellow-butterfly", name: "Yellow Butterfly", items: ["Flying"], months: ["April", "October"], hours: ["Noon"] },
-  { id: "ladybug", name: "Ladybug", items: ["on_Flowers"], months: ["April", "October"], hours: ["Noon"] },
-  { id: "man-faced-stink-bug", name: "Man-Faced Stink Bug", items: ["on_Flowers"], months: ["April", "August", "October"], hours: ["Midnight"] },
-  { id: "mantis", name: "Mantis", items: ["on_Flowers"], months: ["April", "August", "October"], hours: ["Noon"] },
-  { id: "stinkbug", name: "Stinkbug", items: ["on_Flowers"], months: ["April", "August", "October"], hours: ["Noon", "Midnight"] },
-  { id: "bell-cricket", name: "Bell Cricket", items: ["on_Ground"], months: ["October"], hours: ["Midnight"] },
-  { id: "cricket", name: "Cricket", items: ["on_Ground"], months: ["October"], hours: ["Midnight"] },
-  { id: "earth-boring-dung-beetle", name: "Earth-Boring Dung Beetle", items: ["on_Ground"], months: ["August"], hours: ["Noon", "Midnight"] },
-  { id: "grasshopper", name: "Grasshopper", items: ["on_Ground"], months: ["August"], hours: ["Noon"] },
-  { id: "hermit-crab", name: "Hermit Crab", items: ["on_Ground"], months: ["January", "April", "August", "October"], hours: ["Midnight"] },
-  { id: "long-locust", name: "Long Locust", items: ["on_Ground"], months: ["April", "August", "October"], hours: ["Noon"] },
-  { id: "rice-grasshopper", name: "Rice Grasshopper", items: ["on_Ground"], months: ["August", "October"], hours: ["Noon"] },
-  { id: "wharf-roach", name: "Wharf Roach", items: ["on_Ground"], months: ["January", "April", "August", "October"], hours: ["Noon", "Midnight"] },
-  { id: "brown-cicada", name: "Brown Cicada", items: ["on_Trees"], months: ["August"], hours: ["Noon"] },
-  { id: "drone-beetle", name: "Drone Beetle", items: ["on_Trees"], months: ["August"], hours: ["Noon", "Midnight"] },
-  { id: "giant-cicada", name: "Giant Cicada", items: ["on_Trees"], months: ["August"], hours: ["Noon"] },
-  { id: "horned-dynastid", name: "Horned Dynastid", items: ["on_Trees"], months: ["August"], hours: ["Midnight"] },
-  { id: "miyama-stag", name: "Miyama Stag", items: ["on_Trees"], months: ["August"], hours: ["Noon", "Midnight"] },
-  { id: "robust-cicada", name: "Robust Cicada", items: ["on_Trees"], months: ["August"], hours: ["Noon"] },
-  { id: "saw-stag", name: "Saw Stag", items: ["on_Trees"], months: ["August"], hours: ["Noon", "Midnight"] },
-  { id: "walker-cicada", name: "Walker Cicada", items: ["on_Trees"], months: ["August"], hours: ["Noon"] },
-  { id: "bitterling", name: "Bitterling", items: ["River"], months: ["January"], hours: ["Noon", "Midnight"] },
-  { id: "black-bass", name: "Black Bass", items: ["River"], months: ["January", "April", "August", "October"], hours: ["Noon", "Midnight"] },
-  { id: "bluegill", name: "Bluegill", items: ["River"], months: ["January", "April", "August", "October"], hours: ["Noon"] },
-  { id: "crucian-carp", name: "Crucian Carp", items: ["River"], months: ["January", "April", "August", "October"], hours: ["Noon", "Midnight"] },
-  { id: "dace", name: "Dace", items: ["River"], months: ["January", "April", "August", "October"], hours: ["Midnight"] },
-  { id: "loach", name: "Loach", items: ["River"], months: ["April"], hours: ["Noon", "Midnight"] },
-  { id: "pale-chub", name: "Pale Chub", items: ["River"], months: ["January", "April", "August", "October"], hours: ["Noon"] },
-  { id: "pond-smelt", name: "Pond Smelt", items: ["River"], months: ["January"], hours: ["Noon", "Midnight"] },
-  { id: "sweetfish", name: "Sweetfish", items: ["River"], months: ["August"], hours: ["Noon", "Midnight"] },
-  { id: "tilapia", name: "Tilapia", items: ["River"], months: ["August", "October"], hours: ["Noon", "Midnight"] },
-  { id: "yellow-perch", name: "Yellow Perch", items: ["River"], months: ["January", "October"], hours: ["Noon", "Midnight"] },
-  { id: "blowfish", name: "Blowfish", items: ["Sea"], months: ["January"], hours: ["Midnight"] },
-  { id: "clown-fish", name: "Clown Fish", items: ["Sea"], months: ["April", "August"], hours: ["Noon", "Midnight"] },
-  { id: "dab", name: "Dab", items: ["Sea"], months: ["January", "April", "October"], hours: ["Noon", "Midnight"] },
-  { id: "football-fish", name: "Football Fish", items: ["Sea"], months: ["January"], hours: ["Midnight"] },
-  { id: "horse-mackerel", name: "Horse Mackerel", items: ["Sea"], months: ["January", "April", "August", "October"], hours: ["Noon", "Midnight"] },
-  { id: "olive-flounder", name: "Olive Flounder", items: ["Sea"], months: ["January", "April", "August", "October"], hours: ["Noon", "Midnight"] },
-  { id: "puffer-fish", name: "Puffer Fish", items: ["Sea"], months: ["August"], hours: ["Noon", "Midnight"] },
-  { id: "red-snapper", name: "Red Snapper", items: ["Sea"], months: ["January", "April", "August", "October"], hours: ["Noon", "Midnight"] },
-  { id: "sea-bass", name: "Sea Bass", items: ["Sea"], months: ["January", "April", "August", "October"], hours: ["Noon", "Midnight"] },
-  { id: "sea-butterfly", name: "Sea Butterfly", items: ["Sea"], months: ["January"], hours: ["Noon", "Midnight"] },
-  { id: "sea-horse", name: "Sea Horse", items: ["Sea"], months: ["April", "August", "October"], hours: ["Noon", "Midnight"] },
-  { id: "squid", name: "Squid", items: ["Sea"], months: ["January", "April"], hours: ["Noon", "Midnight"] },
-  { id: "zebra-turkeyfish", name: "Zebra Turkeyfish", items: ["Sea"], months: ["April", "August", "October"], hours: ["Noon", "Midnight"] }
-];
+    const rawMasterChecks = [
+      { id: "acorn-barnacle", name: "Acorn Barnacle", items: ["Wetsuit"], months: ["January", "April", "August", "October"], hours: ["12PM", "12AM"] },
+      { id: "firefly-squid", name: "Firefly Squid", items: ["Wetsuit"], months: ["April"], hours: ["12AM"] },
+      { id: "flatworm", name: "Flatworm", items: ["Wetsuit"], months: ["August"], hours: ["12AM"] },
+      { id: "horseshoe-crab", name: "Horseshoe Crab", items: ["Wetsuit"], months: ["August"], hours: ["12AM"] },
+      { id: "moon-jellyfish", name: "Moon Jellyfish", items: ["Wetsuit"], months: ["August"], hours: ["12PM", "12AM"] },
+      { id: "mussel", name: "Mussel", items: ["Wetsuit"], months: ["August", "October"], hours: ["12PM", "12AM"] },
+      { id: "oyster", name: "Oyster", items: ["Wetsuit"], months: ["January", "October"], hours: ["12PM", "12AM"] },
+      { id: "scallop", name: "Scallop", items: ["Wetsuit"], months: ["January", "April", "August", "October"], hours: ["12PM", "12AM"] },
+      { id: "sea-anemone", name: "Sea Anemone", items: ["Wetsuit"], months: ["January", "April", "August", "October"], hours: ["12PM", "12AM"] },
+      { id: "sea-cucumber", name: "Sea Cucumber", items: ["Wetsuit"], months: ["January", "April"], hours: ["12PM", "12AM"] },
+      { id: "sea-grapes", name: "Sea Grapes", items: ["Wetsuit"], months: ["August"], hours: ["12PM", "12AM"] },
+      { id: "sea-slug", name: "Sea Slug", items: ["Wetsuit"], months: ["January", "April", "August", "October"], hours: ["12PM", "12AM"] },
+      { id: "sea-star", name: "Sea Star", items: ["Wetsuit"], months: ["January", "April", "August", "October"], hours: ["12PM", "12AM"] },
+      { id: "sea-urchin", name: "Sea Urchin", items: ["Wetsuit"], months: ["August"], hours: ["12PM", "12AM"] },
+      { id: "seaweed", name: "Seaweed", items: ["Wetsuit"], months: ["January", "April", "October"], hours: ["12PM", "12AM"] },
+      { id: "spotted-garden-eel", name: "Spotted Garden Eel", items: ["Wetsuit"], months: ["August", "October"], hours: ["12PM"] },
+      { id: "sweet-shrimp", name: "Sweet Shrimp", items: ["Wetsuit"], months: ["January", "October"], hours: ["12AM"] },
+      { id: "turban-shell", name: "Turban Shell", items: ["Wetsuit"], months: ["April", "October"], hours: ["12PM", "12AM"] },
+      { id: "whelk", name: "Whelk", items: ["Wetsuit"], months: ["January", "April", "August", "October"], hours: ["12PM", "12AM"] },
+      { id: "common-bluebottle", name: "Common Bluebottle", items: ["Flying"], months: ["April", "August", "October"], hours: ["12PM"] },
+      { id: "common-butterfly", name: "Common Butterfly", items: ["Flying"], months: ["January", "April", "August", "October"], hours: ["12PM"] },
+      { id: "damselfly", name: "Damselfly", items: ["Flying"], months: ["January"], hours: ["12PM", "12AM"] },
+      { id: "darner-dragonfly", name: "Darner Dragonfly", items: ["Flying"], months: ["April", "August", "October"], hours: ["12PM"] },
+      { id: "honeybee", name: "Honeybee", items: ["Flying"], months: ["April"], hours: ["12PM"] },
+      { id: "monarch-butterfly", name: "Monarch Butterfly", items: ["Flying"], months: ["October"], hours: ["12PM"] },
+      { id: "mosquito", name: "Mosquito", items: ["Flying"], months: ["August"], hours: ["12AM"] },
+      { id: "moth", name: "Moth", items: ["Flying"], months: ["January", "April", "August", "October"], hours: ["12AM"] },
+      { id: "paper-kite-butterfly", name: "Paper Kite Butterfly", items: ["Flying"], months: ["January", "April", "August", "October"], hours: ["12PM"] },
+      { id: "red-dragonfly", name: "Red Dragonfly", items: ["Flying"], months: ["October"], hours: ["12PM"] },
+      { id: "tiger-butterfly", name: "Tiger Butterfly", items: ["Flying"], months: ["April", "August"], hours: ["12PM"] },
+      { id: "yellow-butterfly", name: "Yellow Butterfly", items: ["Flying"], months: ["April", "October"], hours: ["12PM"] },
+      { id: "ladybug", name: "Ladybug", items: ["on_Flowers"], months: ["April", "October"], hours: ["12PM"] },
+      { id: "man-faced-stink-bug", name: "Man-Faced Stink Bug", items: ["on_Flowers"], months: ["April", "August", "October"], hours: ["12AM"] },
+      { id: "mantis", name: "Mantis", items: ["on_Flowers"], months: ["April", "August", "October"], hours: ["12PM"] },
+      { id: "stinkbug", name: "Stinkbug", items: ["on_Flowers"], months: ["April", "August", "October"], hours: ["12PM", "12AM"] },
+      { id: "bell-cricket", name: "Bell Cricket", items: ["on_Ground"], months: ["October"], hours: ["12AM"] },
+      { id: "cricket", name: "Cricket", items: ["on_Ground"], months: ["October"], hours: ["12AM"] },
+      { id: "earth-boring-dung-beetle", name: "Earth-Boring Dung Beetle", items: ["on_Ground"], months: ["August"], hours: ["12PM", "12AM"] },
+      { id: "grasshopper", name: "Grasshopper", items: ["on_Ground"], months: ["August"], hours: ["12PM"] },
+      { id: "hermit-crab", name: "Hermit Crab", items: ["on_Ground"], months: ["January", "April", "August", "October"], hours: ["12AM"] },
+      { id: "long-locust", name: "Long Locust", items: ["on_Ground"], months: ["April", "August", "October"], hours: ["12PM"] },
+      { id: "rice-grasshopper", name: "Rice Grasshopper", items: ["on_Ground"], months: ["August", "October"], hours: ["12PM"] },
+      { id: "wharf-roach", name: "Wharf Roach", items: ["on_Ground"], months: ["January", "April", "August", "October"], hours: ["12PM", "12AM"] },
+      { id: "brown-cicada", name: "Brown Cicada", items: ["on_Trees"], months: ["August"], hours: ["12PM"] },
+      { id: "drone-beetle", name: "Drone Beetle", items: ["on_Trees"], months: ["August"], hours: ["12PM", "12AM"] },
+      { id: "giant-cicada", name: "Giant Cicada", items: ["on_Trees"], months: ["August"], hours: ["12PM"] },
+      { id: "horned-dynastid", name: "Horned Dynastid", items: ["on_Trees"], months: ["August"], hours: ["12AM"] },
+      { id: "miyama-stag", name: "Miyama Stag", items: ["on_Trees"], months: ["August"], hours: ["12PM", "12AM"] },
+      { id: "robust-cicada", name: "Robust Cicada", items: ["on_Trees"], months: ["August"], hours: ["12PM"] },
+      { id: "saw-stag", name: "Saw Stag", items: ["on_Trees"], months: ["August"], hours: ["12PM", "12AM"] },
+      { id: "walker-cicada", name: "Walker Cicada", items: ["on_Trees"], months: ["August"], hours: ["12PM"] },
+      { id: "bitterling", name: "Bitterling", items: ["River"], months: ["January"], hours: ["12PM", "12AM"] },
+      { id: "black-bass", name: "Black Bass", items: ["River"], months: ["January", "April", "August", "October"], hours: ["12PM", "12AM"] },
+      { id: "bluegill", name: "Bluegill", items: ["River"], months: ["January", "April", "August", "October"], hours: ["12PM"] },
+      { id: "crucian-carp", name: "Crucian Carp", items: ["River"], months: ["January", "April", "August", "October"], hours: ["12PM", "12AM"] },
+      { id: "dace", name: "Dace", items: ["River"], months: ["January", "April", "August", "October"], hours: ["12AM"] },
+      { id: "loach", name: "Loach", items: ["River"], months: ["April"], hours: ["12PM", "12AM"] },
+      { id: "pale-chub", name: "Pale Chub", items: ["River"], months: ["January", "April", "August", "October"], hours: ["12PM"] },
+      { id: "pond-smelt", name: "Pond Smelt", items: ["River"], months: ["January"], hours: ["12PM", "12AM"] },
+      { id: "sweetfish", name: "Sweetfish", items: ["River"], months: ["August"], hours: ["12PM", "12AM"] },
+      { id: "tilapia", name: "Tilapia", items: ["River"], months: ["August", "October"], hours: ["12PM", "12AM"] },
+      { id: "yellow-perch", name: "Yellow Perch", items: ["River"], months: ["January", "October"], hours: ["12PM", "12AM"] },
+      { id: "blowfish", name: "Blowfish", items: ["Sea"], months: ["January"], hours: ["12AM"] },
+      { id: "clown-fish", name: "Clown Fish", items: ["Sea"], months: ["April", "August"], hours: ["12PM", "12AM"] },
+      { id: "dab", name: "Dab", items: ["Sea"], months: ["January", "April", "October"], hours: ["12PM", "12AM"] },
+      { id: "football-fish", name: "Football Fish", items: ["Sea"], months: ["January"], hours: ["12AM"] },
+      { id: "horse-mackerel", name: "Horse Mackerel", items: ["Sea"], months: ["January", "April", "August", "October"], hours: ["12PM", "12AM"] },
+      { id: "olive-flounder", name: "Olive Flounder", items: ["Sea"], months: ["January", "April", "August", "October"], hours: ["12PM", "12AM"] },
+      { id: "puffer-fish", name: "Puffer Fish", items: ["Sea"], months: ["August"], hours: ["12PM", "12AM"] },
+      { id: "red-snapper", name: "Red Snapper", items: ["Sea"], months: ["January", "April", "August", "October"], hours: ["12PM", "12AM"] },
+      { id: "sea-bass", name: "Sea Bass", items: ["Sea"], months: ["January", "April", "August", "October"], hours: ["12PM", "12AM"] },
+      { id: "sea-butterfly", name: "Sea Butterfly", items: ["Sea"], months: ["January"], hours: ["12PM", "12AM"] },
+      { id: "sea-horse", name: "Sea Horse", items: ["Sea"], months: ["April", "August", "October"], hours: ["12PM", "12AM"] },
+      { id: "squid", name: "Squid", items: ["Sea"], months: ["January", "April"], hours: ["12PM", "12AM"] },
+      { id: "zebra-turkeyfish", name: "Zebra Turkeyfish", items: ["Sea"], months: ["April", "August"], hours: ["12PM", "12AM"] },
 
-// 2. Automatically assign unique slug IDs
-const masterChecks = rawMasterChecks.map(check => ({
-  ...check,
-  id: slugify(check.name) // Results in "acorn-barnacle", "scallop", "sea-anemone"
-}));
+      // Exact Goal Requirement Checks matching locations.json
+      { 
+        id: "clifftop-river-exclusive", 
+        name: "Clifftop River Exclusive", 
+        displayName: "Clifftop River Exclusive (Cherry Salmon / Char / Golden Trout)", 
+        items: ["Clifftop_River", "Bait"], 
+        months: ["October"], 
+        hours: ["12AM", "12PM"] 
+      },
+      { 
+        id: "palm-tree-exclusive", 
+        name: "Palm Tree Exclusive", 
+        displayName: "Palm Tree Exclusive (Blue Weevil Beetle / Goliath Beetle / Cyclommatus Stag / Horned Atlas / Horned Elephant / Horned Hercules / Giraffe Stag / Golden Stag)", 
+        items: ["on_Palm_Trees", "Nook_Miles_Tickets", "on_Trees"], 
+        months: ["August"], 
+        hours: ["12AM"] 
+      }
+    ];
 
-// Definition for the 8 region tables
-const regions = [
-  { name: "January - 12PM", month: "January", hour: "Noon" },
-  { name: "January - 12AM", month: "January", hour: "Midnight" },
-  { name: "April - 12PM",   month: "April",   hour: "Noon" },
-  { name: "April - 12AM",   month: "April",   hour: "Midnight" },
-  { name: "August - 12PM",  month: "August",  hour: "Noon" },
-  { name: "August - 12AM",  month: "August",  hour: "Midnight" },
-  { name: "October - 12PM", month: "October", hour: "Noon" },
-  { name: "October - 12AM", month: "October", hour: "Midnight" }
-];
+    const masterChecks = rawMasterChecks.map(check => ({
+      ...check,
+      id: check.id || slugify(check.name)
+    }));
 
-    // 2. Logic Checker
+    const regions = [
+      { name: "January - 12PM", month: "January", hour: "12PM" },
+      { name: "January - 12AM", month: "January", hour: "12AM" },
+      { name: "April - 12PM",   month: "April",   hour: "12PM" },
+      { name: "April - 12AM",   month: "April",   hour: "12AM" },
+      { name: "August - 12PM",  month: "August",  hour: "12PM" },
+      { name: "August - 12AM",  month: "August",  hour: "12AM" },
+      { name: "October - 12PM", month: "October", hour: "12PM" },
+      { name: "October - 12AM", month: "October", hour: "12AM" }
+    ];
+
+    function hasItem(itemName) {
+      if (itemName === "River") {
+        return itemsState.River_A || itemsState.River_B;
+      }
+      if (itemName === "Clifftop_River") {
+        return itemsState.River_A && itemsState.River_B;
+      }
+      return itemsState[itemName] === true;
+    }
+
     function isCheckAvailable(items, months, hours) {
-      console.log(itemsState)
-      return Array.isArray(items) && items.every(item => itemsState[item]) &&
-         Array.isArray(months) && months.some(month => itemsState[month]) &&
-         Array.isArray(hours) && hours.some(hour => itemsState[hour]);
+      return Array.isArray(items) && items.every(item => hasItem(item)) &&
+             Array.isArray(months) && months.some(month => hasItem(month)) &&
+             Array.isArray(hours) && hours.some(hour => hasItem(hour));
     }
 
-    function toggleItem(itemKey, el) {
-  itemsState[itemKey] = !itemsState[itemKey];
-  el.classList.toggle("active");
-  renderTables(); // Re-renders and automatically hides empty headers/tables
-}
-
-function completeCheck(checkId) {
-  completedChecks.add(checkId);
-  renderTables(); // Instantly removes checked item and cleans up empty headers
-}
-
-function renderTables() {
-  const container = document.getElementById("tables-container");
-  container.innerHTML = "";
-
-  regions.forEach(region => {
-    // 1. Skip region entirely if its month OR hour is false in itemsState
-    if (!itemsState[region.month] || !itemsState[region.hour]) {
-      return;
+    function isGoalCheckAvailable(checkId) {
+      const checkObj = masterChecks.find(c => c.id === checkId);
+      if (!checkObj) return false;
+      return isCheckAvailable(checkObj.items, checkObj.months, checkObj.hours) && !completedChecks.has(checkObj.id);
     }
 
-    const card = document.createElement("div");
-    card.className = "region-card";
+    function checkAndSendGoalCompletion() {
+      const clifftopDone = completedChecks.has("clifftop-river-exclusive");
+      const palmDone = completedChecks.has("palm-tree-exclusive");
 
-    // 2. Get all checks belonging to this region's month AND hour
-    const regionChecks = masterChecks.filter(check => 
-      check.months.includes(region.month) && check.hours.includes(region.hour)
-    );
+      if (clifftopDone && palmDone && !isFinished) {
+        isFinished = true;
 
-    // 3. Find unique items required in this region
-    const uniqueItems = [...new Set(regionChecks.flatMap(check => check.items || []))];
+        if (ws && ws.readyState === WebSocket.OPEN) {
+          // Send ClientStatus.GOAL (30) to notify the AP server that victory conditions are met
+          const statusPacket = [{
+            cmd: "StatusUpdate",
+            status: 30
+          }];
+          ws.send(JSON.stringify(statusPacket));
+        }
+      }
+    }
 
-    let cardHTML = `<h2>${region.name}</h2>`;
-    let visibleTablesCount = 0;
+    function markCheckedLocation(locId) {
+      const locName = apIdToLocationNameMap[locId];
+      if (locName) {
+        completedChecks.add(slugify(locName));
+      } else {
+        completedChecks.add(locId.toString());
+      }
+      checkAndSendGoalCompletion();
+    }
 
-    // 4. Loop through each item group
-    uniqueItems.forEach(itemName => {
-      const availableItemChecks = regionChecks.filter(check => {
-        const requiresItem = check.items.includes(itemName);
-        const isAvailable = isCheckAvailable(check.items, check.months, check.hours);
-        const isCompleted = completedChecks.has(check.id);
+    function completeCheck(checkId, checkName) {
+      completedChecks.add(checkId);
+
+      const apLocationId = locationNameToApIdMap[checkName];
+
+      if (ws && ws.readyState === WebSocket.OPEN && apLocationId) {
+        const checkPacket = [{
+          cmd: "LocationChecks",
+          locations: [apLocationId]
+        }];
+        ws.send(JSON.stringify(checkPacket));
+      } else if (!apLocationId) {
+        console.warn(`Could not find AP Location ID for: "${checkName}"`);
+      }
+
+      checkAndSendGoalCompletion();
+      renderTables();
+    }
+
+    function activateItemByName(rawName) {
+      const targetClean = cleanKey(rawName);
+
+      if (targetClean === "onpalmtrees" || targetClean === "palmtrees" || targetClean === "palmtree" || targetClean === "onpalmtree") {
+        itemsState.on_Palm_Trees = true;
+        return;
+      }
+      if (targetClean === "onground") {
+        itemsState.on_Ground = true;
+        return;
+      }
+      if (targetClean === "onflowers" || targetClean === "flower" || targetClean === "flowers") {
+        itemsState.on_Flowers = true;
+        return;
+      }
+      if (targetClean === "ontrees" || targetClean === "tree" || targetClean === "trees") {
+        itemsState.on_Trees = true;
+        return;
+      }
+      if (targetClean === "nookmilestickets" || targetClean === "nookmilesticket" || targetClean === "nookmiles") {
+        itemsState.Nook_Miles_Tickets = true;
+        return;
+      }
+
+      for (const key of Object.keys(itemsState)) {
+        if (cleanKey(key) === targetClean) {
+          itemsState[key] = true;
+          break;
+        }
+      }
+    }
+
+    function renderTables() {
+      const container = document.getElementById("tables-container");
+      container.innerHTML = "";
+
+      const victoryBanner = document.getElementById("victory-banner");
+      const goBadge = document.getElementById("go-mode-badge");
+
+      // 1. Victory Render
+      if (isFinished) {
+        victoryBanner.style.display = "block";
+        goBadge.style.display = "none";
+
+        const victoryCard = document.createElement("div");
+        victoryCard.className = "region-card victory-card";
+        victoryCard.innerHTML = `
+          <h2>🏆 VICTORY ACHIEVED 🏆</h2>
+          <p>You have completed all goals and finished your Animal Crossing: New Horizons Randomizer!</p>
+        `;
+        container.appendChild(victoryCard);
+        return;
+      } else {
+        victoryBanner.style.display = "none";
+      }
+
+      // 2. Go Mode Check
+      const clifftopReady = isGoalCheckAvailable("clifftop-river-exclusive");
+      const palmTreeReady = isGoalCheckAvailable("palm-tree-exclusive");
+      const inGoMode = clifftopReady && palmTreeReady;
+
+      if (inGoMode) {
+        goBadge.style.display = "inline-block";
+
+        const goCard = document.createElement("div");
+        goCard.className = "region-card go-mode-card";
         
-        return requiresItem && isAvailable && !isCompleted;
-      });
+        const clifftopObj = masterChecks.find(c => c.id === "clifftop-river-exclusive");
+        const palmObj = masterChecks.find(c => c.id === "palm-tree-exclusive");
 
-      if (availableItemChecks.length > 0) {
-        visibleTablesCount++;
-        cardHTML += `
-          <h3>${getDisplayName(itemName)}</h3>
+        goCard.innerHTML = `
+          <h2>🔥 GO MODE - FINAL GOAL CHECKS AVAILABLE 🔥</h2>
           <table>
-            <tbody>`;
-        
-        availableItemChecks.forEach(check => {
-          cardHTML += `
-            <tr class="check-row" data-id="${check.id}" onclick="completeCheck('${check.id}')">
-              <td>${check.name}</td>
-            </tr>`;
+            <tbody>
+              <tr class="check-row" onclick="completeCheck('${clifftopObj.id}', '${clifftopObj.name}')">
+                <td><strong>[Goal Check]</strong> ${clifftopObj.displayName || clifftopObj.name}</td>
+              </tr>
+              <tr class="check-row" onclick="completeCheck('${palmObj.id}', '${palmObj.name}')">
+                <td><strong>[Goal Check]</strong> ${palmObj.displayName || palmObj.name}</td>
+              </tr>
+            </tbody>
+          </table>
+        `;
+        container.appendChild(goCard);
+      } else {
+        goBadge.style.display = "none";
+      }
+
+      // 3. Render Standard Region Cards
+      regions.forEach(region => {
+        if (!hasItem(region.month) || !hasItem(region.hour)) {
+          return;
+        }
+
+        const card = document.createElement("div");
+        card.className = "region-card";
+
+        const regionChecks = masterChecks.filter(check => 
+          check.months.includes(region.month) && check.hours.includes(region.hour)
+        );
+
+        const uniqueItems = [...new Set(regionChecks.flatMap(check => check.items || []))];
+
+        let cardHTML = `<h2>${region.name}</h2>`;
+        let visibleTablesCount = 0;
+
+        uniqueItems.forEach(itemName => {
+          const availableItemChecks = regionChecks.filter(check => {
+            const requiresItem = check.items.includes(itemName);
+            const isAvailable = isCheckAvailable(check.items, check.months, check.hours);
+            const isCompleted = completedChecks.has(check.id);
+            
+            return requiresItem && isAvailable && !isCompleted;
+          });
+
+          if (availableItemChecks.length > 0) {
+            visibleTablesCount++;
+            cardHTML += `
+              <h3>${getDisplayName(itemName)}</h3>
+              <table>
+                <tbody>`;
+            
+            availableItemChecks.forEach(check => {
+              const labelText = check.displayName || check.name;
+              cardHTML += `
+                <tr class="check-row" data-id="${check.id}" onclick="completeCheck('${check.id}', '${check.name}')">
+                  <td>${labelText}</td>
+                </tr>`;
+            });
+
+            cardHTML += `</tbody></table><br>`;
+          }
         });
 
-        cardHTML += `</tbody></table><br>`;
-      }
-    });
+        if (visibleTablesCount > 0) {
+          card.innerHTML = cardHTML;
+          container.appendChild(card);
+        }
+      });
 
-    // 5. Only append the region card if it has active checks
-    if (visibleTablesCount > 0) {
-      card.innerHTML = cardHTML;
-      container.appendChild(card);
+      // Synchronize UI highlights
+      const inventoryItems = document.querySelectorAll("#inventory .item");
+      inventoryItems.forEach(el => {
+        const itemKey = el.id;
+        if (hasItem(itemKey)) {
+          el.classList.add("active");
+        } else {
+          el.classList.remove("active");
+        }
+      });
     }
-  });
 
-  // Re-sync active highlighting on inventory buttons
-  const inventoryItems = document.querySelectorAll("#inventory .item");
-  inventoryItems.forEach(el => {
-    if (itemsState[el.id]) {
-      el.classList.add("active");
-    } else {
-      el.classList.remove("active");
+    function setStatus(status, text) {
+      const badge = document.getElementById("status-badge");
+      badge.className = status;
+      badge.textContent = text;
     }
-  });
-}
 
-    function updateVisibility() {
-  masterChecks.forEach(check => {
-    const rows = document.querySelectorAll(`tr[data-id="${check.id}"]`);
-    const available = isCheckAvailable(check.items, check.months, check.hours);
-    const completed = completedChecks.has(check.id);
+    function connectAP() {
+      const port = document.getElementById("port").value;
+      if (!port) return alert("Please enter a valid port.");
 
-    rows.forEach(row => {
-      if (!completed && available) {
-        row.classList.remove("hidden");
-      } else {
-        row.classList.add("hidden");
+      const url = "wss://archipelago.gg:" + port;
+
+      setStatus("connecting", "Connecting...");
+      ws = new WebSocket(url);
+
+      ws.onopen = () => {
+        setStatus("connecting", "Handshaking...");
+      };
+
+      ws.onmessage = (event) => {
+        const packets = JSON.parse(event.data);
+        for (const packet of packets) {
+          handlePacket(packet);
+        }
+      };
+
+      ws.onerror = (err) => {
+        console.error("WebSocket Error:", err);
+        setStatus("disconnected", "Connection Error");
+      };
+
+      ws.onclose = () => {
+        setStatus("disconnected", "Disconnected");
+        ws = null;
+      };
+    }
+
+    function disconnectAP() {
+      if (ws) {
+        ws.close();
+        ws = null;
       }
-    });
-  });
-}
+      setStatus("disconnected", "Disconnected");
+    }
 
-    // Initialize
+    function handlePacket(packet) {
+      switch (packet.cmd) {
+        case "RoomInfo":
+          sendConnect();
+          break;
+
+        case "DataPackage":
+          const gameName = "Manual_AnimalCrossingNewHorizons_Caaasper";
+          const gameData = packet.data ? packet.data.games[gameName] : null;
+
+          if (gameData) {
+            apItemIdToNameMap = {};
+            if (gameData.item_name_to_id) {
+              for (const [name, id] of Object.entries(gameData.item_name_to_id)) {
+                apItemIdToNameMap[id] = name;
+              }
+            }
+
+            locationNameToApIdMap = {};
+            apIdToLocationNameMap = {};
+            if (gameData.location_name_to_id) {
+              for (const [name, id] of Object.entries(gameData.location_name_to_id)) {
+                locationNameToApIdMap[name] = id;
+                apIdToLocationNameMap[id] = name;
+              }
+            }
+          }
+          break;
+
+        case "Connected":
+          setStatus("connected", "Connected");
+
+          Object.keys(itemsState).forEach(key => { itemsState[key] = false; });
+          completedChecks.clear();
+          isFinished = false;
+
+          if (packet.slot_data && packet.slot_data.finished) {
+            isFinished = true;
+          }
+
+          if (packet.checked_locations) {
+            packet.checked_locations.forEach(locId => markCheckedLocation(locId));
+          }
+
+          renderTables();
+          break;
+
+        case "ReceivedItems":
+          if (packet.items) {
+            packet.items.forEach(itemInfo => {
+              const rawItemName = apItemIdToNameMap[itemInfo.item];
+              if (rawItemName) {
+                activateItemByName(rawItemName);
+              }
+            });
+            renderTables();
+          }
+          break;
+
+        case "RoomUpdate":
+          if (packet.status === 30 || (packet.found_goals && packet.found_goals.length > 0)) {
+            isFinished = true;
+          }
+
+          if (packet.checked_locations) {
+            packet.checked_locations.forEach(locId => markCheckedLocation(locId));
+          }
+
+          renderTables();
+          break;
+
+        case "ConnectionRefused":
+          alert("AP Connection Refused: " + (packet.errors ? packet.errors.join(", ") : "Unknown error"));
+          setStatus("disconnected", "Refused");
+          break;
+      }
+    }
+
+    function sendConnect() {
+      const slotName = document.getElementById("slot-name").value;
+      const gameName = "Manual_AnimalCrossingNewHorizons_Caaasper";
+
+      const connectPackets = [
+        {
+          cmd: "GetDataPackage",
+          games: [gameName]
+        },
+        {
+          cmd: "Connect",
+          password: "",
+          game: gameName,
+          name: slotName,
+          uuid: "acnh-web-client-" + Math.random().toString(36).substring(2, 9),
+          version: { major: 0, minor: 5, build: 0, class: "Version" },
+          tags: ["AP"],
+          items_handling: 7
+        }
+      ];
+
+      ws.send(JSON.stringify(connectPackets));
+    }
+
+    // Initialize UI
     renderTables();
-    updateVisibility();
   </script>
 </body>
 </html>
