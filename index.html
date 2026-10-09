@@ -292,8 +292,8 @@
       on_Ground: false,
       Flying: false,
       on_Flowers: false,
-      on_Trees: false,
-      on_Palm_Trees: false
+      on_Trees_A: false,
+      on_Trees_B: false
     };
 
     const itemDisplayNames = {
@@ -408,7 +408,7 @@
       { id: "squid", name: "Squid", items: ["Sea"], months: ["January", "April"], hours: ["12PM", "12AM"] },
       { id: "zebra-turkeyfish", name: "Zebra Turkeyfish", items: ["Sea"], months: ["April", "August"], hours: ["12PM", "12AM"] },
 
-      // Exact Goal Requirement Checks matching locations.json
+      // Goal Requirement Checks
       { 
         id: "clifftop-river-exclusive", 
         name: "Clifftop River Exclusive", 
@@ -450,6 +450,12 @@
       if (itemName === "Clifftop_River") {
         return itemsState.River_A && itemsState.River_B;
       }
+      if (itemName === "on_Trees") {
+        return itemsState.on_Trees_A || itemsState.on_Trees_B;
+      }
+      if (itemName === "on_Palm_Trees") {
+        return itemsState.on_Trees_A && itemsState.on_Trees_B;
+      }
       return itemsState[itemName] === true;
     }
 
@@ -473,7 +479,6 @@
         isFinished = true;
 
         if (ws && ws.readyState === WebSocket.OPEN) {
-          // Send ClientStatus.GOAL (30) to notify the AP server that victory conditions are met
           const statusPacket = [{
             cmd: "StatusUpdate",
             status: 30
@@ -515,8 +520,12 @@
     function activateItemByName(rawName) {
       const targetClean = cleanKey(rawName);
 
-      if (targetClean === "onpalmtrees" || targetClean === "palmtrees" || targetClean === "palmtree" || targetClean === "onpalmtree") {
-        itemsState.on_Palm_Trees = true;
+      if (targetClean === "ontreesa" || targetClean === "treesa" || targetClean === "treea" || targetClean === "ontreea") {
+        itemsState.on_Trees_A = true;
+        return;
+      }
+      if (targetClean === "ontreesb" || targetClean === "treesb" || targetClean === "treeb" || targetClean === "ontreeb") {
+        itemsState.on_Trees_B = true;
         return;
       }
       if (targetClean === "onground") {
@@ -525,10 +534,6 @@
       }
       if (targetClean === "onflowers" || targetClean === "flower" || targetClean === "flowers") {
         itemsState.on_Flowers = true;
-        return;
-      }
-      if (targetClean === "ontrees" || targetClean === "tree" || targetClean === "trees") {
-        itemsState.on_Trees = true;
         return;
       }
       if (targetClean === "nookmilestickets" || targetClean === "nookmilesticket" || targetClean === "nookmiles") {
